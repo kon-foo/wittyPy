@@ -87,10 +87,10 @@ class WittyPi():
         self._get_shutdown()
 
     def set_startup(self, *args):
-        '''Set startup for the WittyPi. Takes up to four *args.
+        '''Set startup for the WittyPi. Takes up to four \*args.
 
         :param \*args:
-            1. Day (``int`` or ``str``): Either integer between 0-31 or "??" for wildcard.
+            1. Day (``int`` or ``str``): Either integer between 1-31 or "??" for wildcard.
             2. Hour (``int`` or ``str``): Either integer between 0-23 or "??" for wildcard.
             3. Minute (``int``): Integer between 0-59.
             4. Second (``int``): Integer between 0-59.
@@ -102,10 +102,10 @@ class WittyPi():
         self._get_startup()
 
     def set_shutdown(self, *args):
-        '''Set shutdown for the WittyPi. Takes up to three *args.
+        '''Set shutdown for the WittyPi. Takes up to three \*args.
 
         :param \*args:
-            1. Day (``int`` or ``str``): Either integer between 0-31 or "??" for wildcard.
+            1. Day (``int`` or ``str``): Either integer between 1-31 or "??" for wildcard.
             2. Hour (``int`` or ``str``): Either integer between 0-23 or "??" for wildcard.
             3. Minute (``int``): Integer between 0-59.
 
@@ -117,19 +117,20 @@ class WittyPi():
 
     def reset(self, option):
         '''Resets the WittyPi according to options
+
         :param option:
-                Options: startup, shutdown, script, all.
+            Options: startup, shutdown, script, all.
         :type options: ``str``
 
         '''
-        options = ["startup", "shutdown", "script", "all"]
+        options = ["startup", "shutdown", "schedule", "all"]
         if option not in options:
-            raise Exception('Error: Chose one of these options: "startup", "shutdown", "script", "all"')
+            raise Exception('Error: Chose one of these options: "startup", "shutdown", "schedule", "all"')
         if option != "shutdown":
             self.__run_util_function("clear_startup_time")
         if option != "startup":
             self.__run_util_function("clear_shutdown_time")
-        if option in ["script", "all"]:
+        if option in ["schedule", "all"]:
             try:
                 os.remove(self.path + "/schedule.wpi")
             except:
@@ -261,7 +262,7 @@ class WittyTime():
         self.as_date = datetime.datetime.strptime(next, "%Y-%m-%d %H:%M:%S")
 
     def t_left(self):
-        ''''Returns time in seconds between WittyTime and system time.'''
+        '''Returns time in seconds between WittyTime and system time.'''
         if self.as_date == 'unset':
             return "{} is unset.".format(self.name)
         return self.as_date - datetime.datetime.now()
@@ -274,4 +275,4 @@ class WittyTime():
 
 
     def __repr__(self):
-        return "WittyTime(day={}, hour={}, minute={}, second={}, as_date={})".format(self.day, self.hour, self.minute, self.second, self.as_date)
+        return "WittyTime(type={}, day={}, hour={}, minute={}, second={}, as_date={})".format(self.name, self.day, self.hour, self.minute, self.second, self.as_date)
