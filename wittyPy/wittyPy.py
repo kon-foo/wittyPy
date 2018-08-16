@@ -189,8 +189,6 @@ class WittyTime():
         if args[0] == 0:
             return
         elif args[0] not in range(1, 32) and args[0] != "??":
-            print(args[0])
-            print(type(args[0]))
             raise Exception("Format Error: Day must be an integer between 1-31 or '??' for wildcard.")
         else:
             self.day = args[0]
