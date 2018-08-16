@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Guide &mdash; wittyPy 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="wittyPy 0.1 documentation" href="index.html" />
+    <link rel="next" title="API reference" href="api.html" />
+    <link rel="prev" title="Welcome to wittyPy’s documentation!" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="guide">
+<h1>Guide<a class="headerlink" href="#guide" title="Permalink to this headline">¶</a></h1>
+<p>Before using wittyPy, make sure your Witty-Pi and the according software works propperly on your Raspberry Pi.</p>
+<div class="section" id="initialising">
+<h2>Initialising<a class="headerlink" href="#initialising" title="Permalink to this headline">¶</a></h2>
+<p>To use the wittyPy functionality, you first have to instatiate wittyPy and connect it to your wittyPi. As the only argument it takes the path to your wittyPi software directory:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">wittyPy</span>
+<span class="n">witty</span> <span class="o">=</span> <span class="n">wittyPy</span><span class="o">.</span><span class="n">WittyPi</span><span class="p">(</span><span class="s1">&#39;/home/user/wittyPi&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="section" id="current-state">
+<h3>Current State<a class="headerlink" href="#current-state" title="Permalink to this headline">¶</a></h3>
+<p>After instatiating, <a class="reference internal" href="api.html#wittyPy.WittyPi" title="wittyPy.WittyPi"><code class="xref py py-class docutils literal"><span class="pre">WittyPi</span></code></a> searches for the required files and reads the current state of your Witty-Pi. You can access them using:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">witty</span><span class="o">.</span><span class="n">next_startup</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">witty</span><span class="o">.</span><span class="n">next_shutdown</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">witty</span><span class="o">.</span><span class="n">available_schedules</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">witty</span><span class="o">.</span><span class="n">timedelta</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">witty.next_startup</span></code> and <code class="docutils literal"><span class="pre">witty.next_shutdown</span></code> are <a class="reference internal" href="api.html#wittyPy.WittyTime" title="wittyPy.WittyTime"><code class="xref py py-class docutils literal"><span class="pre">WittyTime</span></code></a> objects and store the next scheduled boot/shutdown.</li>
+<li><code class="docutils literal"><span class="pre">witty.available_schedules```is</span> <span class="pre">a</span> <span class="pre">list</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">schedules</span> <span class="pre">in</span> <span class="pre">your</span> <span class="pre">``../wittyPi/schedules</span></code> folder.</li>
+<li><code class="docutils literal"><span class="pre">witty.timedelta</span></code> is the difference in seconds between your system time and your RTC time.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="set-startup-or-shutdown">
+<h2>Set Startup or Shutdown<a class="headerlink" href="#set-startup-or-shutdown" title="Permalink to this headline">¶</a></h2>
+<p>To set a startup or shutdown, run <code class="xref py py-meth docutils literal"><span class="pre">wittyPy.set_startup()</span></code> or <code class="xref py py-meth docutils literal"><span class="pre">wittyPy.set_shutdown()</span></code>. The startup methods takes up to four arguments (day, hour, minute, second) and the shutdown method three (day, hour, minute). Running these functions will create a <a class="reference internal" href="api.html#wittyPy.WittyTime" title="wittyPy.WittyTime"><code class="xref py py-class docutils literal"><span class="pre">WittyTime</span></code></a>. This includes a validation of the argzuments. Use integers (day: 1-31; hour: 0-23; minute &amp; second: 0-59). For day and hour you can also use <code class="docutils literal"><span class="pre">&quot;??&quot;</span></code> as a wildcard. If you set a wildcard for the hour, the Witty Pi expects that you also set a wildcard for the day:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">witty</span><span class="o">.</span><span class="n">set_startup</span><span class="p">(</span><span class="s1">&#39;??&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+<span class="n">witty</span><span class="o">.</span><span class="n">set_shutdown</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="set-schedule">
+<h2>Set Schedule<a class="headerlink" href="#set-schedule" title="Permalink to this headline">¶</a></h2>
+<p>To activate a schedule use <code class="xref py py-meth docutils literal"><span class="pre">wittyPy.activate_schedule()</span></code>. This method expects the index of the desired schedule in the <code class="docutils literal"><span class="pre">witty.available_schedules</span></code> list:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">witty</span><span class="o">.</span><span class="n">activate_schedule</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To reset startup, shutdown or schedule, simply overwrite it with a new one, or use the <code class="xref py py-meth docutils literal"><span class="pre">wittyPy.reset()</span></code> method. This method takes <code class="docutils literal"><span class="pre">&quot;startup&quot;</span></code>,``&#8221;shutdown&#8221;<code class="docutils literal"><span class="pre">,</span></code>&#8220;schedule&#8221;`` or <code class="docutils literal"><span class="pre">&quot;all&quot;</span></code> as an option:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">witty</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="check-time-left">
+<h2>Check time left<a class="headerlink" href="#check-time-left" title="Permalink to this headline">¶</a></h2>
+<p>To check the time left until next startup or shutdown, use the <code class="xref py py-meth docutils literal"><span class="pre">wittyTime.t_left()</span></code> method:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">witty</span><span class="o">.</span><span class="n">next_startup</span><span class="o">.</span><span class="n">t_left</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#initialising">Initialising</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#set-startup-or-shutdown">Set Startup or Shutdown</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#set-schedule">Set Schedule</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#check-time-left">Check time left</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API reference</a></li>
+</ul>
+
+
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Guide</a><ul>
+<li><a class="reference internal" href="#initialising">Initialising</a><ul>
+<li><a class="reference internal" href="#current-state">Current State</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#set-startup-or-shutdown">Set Startup or Shutdown</a></li>
+<li><a class="reference internal" href="#set-schedule">Set Schedule</a></li>
+<li><a class="reference internal" href="#check-time-left">Check time left</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Lucas Langholf.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/guide.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/elpunkt/wittyPy" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

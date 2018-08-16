@@ -1,0 +1,201 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>API reference &mdash; wittyPy 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="wittyPy 0.1 documentation" href="index.html" />
+    <link rel="prev" title="Guide" href="guide.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="api-reference">
+<h1>API reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="wittyPy.WittyPi">
+<em class="property">class </em><code class="descclassname">wittyPy.</code><code class="descname">WittyPi</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wittyPy/wittyPy.html#WittyPi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wittyPy.WittyPi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Central instance to run functions on the wittyPy.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path</strong> (<code class="docutils literal"><span class="pre">str</span></code>) &#8211; Path to your wittyPi folder (Where &#8220;wittyPi.sh&#8221;, &#8220;utilities.sh&#8221;, &#8220;daemon.sh&#8221; can be found).</li>
+<li><strong>next_start</strong> (<code class="docutils literal"><span class="pre">WittyTime</span></code>) &#8211; WittyTime object, if a startup is set, else None.</li>
+<li><strong>next_shutdown</strong> (<code class="docutils literal"><span class="pre">WittyTime</span></code>) &#8211; WittyTime object, if a shutdown is set, else None.</li>
+<li><strong>available_schedules</strong> (<code class="docutils literal"><span class="pre">list</span></code>) &#8211; List of available schedules.</li>
+<li><strong>timedelta</strong> (<code class="docutils literal"><span class="pre">float</span></code>) &#8211; Difference between system time and Realtime Clock time. If positive, system time is ahead of the RTC and vice versa.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="wittyPy.WittyPi.activate_schedule">
+<code class="descname">activate_schedule</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wittyPy/wittyPy.html#WittyPi.activate_schedule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wittyPy.WittyPi.activate_schedule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Activates a WittyPi schedule, chosen by their index in self.available_schedules.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="wittyPy.WittyPi.set_startup">
+<code class="descname">set_startup</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wittyPy/wittyPy.html#WittyPi.set_startup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wittyPy.WittyPi.set_startup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set startup for the WittyPi. Takes up to four *args.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>*args</strong> &#8211; <ol class="arabic simple">
+<li>Day (<code class="docutils literal"><span class="pre">int</span></code> or <code class="docutils literal"><span class="pre">str</span></code>): Either integer between 1-31 or &#8221;??&#8221; for wildcard.</li>
+<li>Hour (<code class="docutils literal"><span class="pre">int</span></code> or <code class="docutils literal"><span class="pre">str</span></code>): Either integer between 0-23 or &#8221;??&#8221; for wildcard.</li>
+<li>Minute (<code class="docutils literal"><span class="pre">int</span></code>): Integer between 0-59.</li>
+<li>Second (<code class="docutils literal"><span class="pre">int</span></code>): Integer between 0-59.</li>
+</ol>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="wittyPy.WittyPi.set_shutdown">
+<code class="descname">set_shutdown</code><span class="sig-paren">(</span><em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wittyPy/wittyPy.html#WittyPi.set_shutdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wittyPy.WittyPi.set_shutdown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set shutdown for the WittyPi. Takes up to three *args.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>*args</strong> &#8211; <ol class="arabic simple">
+<li>Day (<code class="docutils literal"><span class="pre">int</span></code> or <code class="docutils literal"><span class="pre">str</span></code>): Either integer between 1-31 or &#8221;??&#8221; for wildcard.</li>
+<li>Hour (<code class="docutils literal"><span class="pre">int</span></code> or <code class="docutils literal"><span class="pre">str</span></code>): Either integer between 0-23 or &#8221;??&#8221; for wildcard.</li>
+<li>Minute (<code class="docutils literal"><span class="pre">int</span></code>): Integer between 0-59.</li>
+</ol>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="wittyPy.WittyPi.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><em>option</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wittyPy/wittyPy.html#WittyPi.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wittyPy.WittyPi.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resets the WittyPi according to options</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>option</strong> &#8211; Options: startup, shutdown, script, all.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="wittyPy.WittyTime">
+<em class="property">class </em><code class="descclassname">wittyPy.</code><code class="descname">WittyTime</code><span class="sig-paren">(</span><em>*args</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/wittyPy/wittyPy.html#WittyTime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wittyPy.WittyTime" title="Permalink to this definition">¶</a></dt>
+<dd><p>WittyTime object to validate and store times for the WittyPi.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> (<code class="docutils literal"><span class="pre">str</span></code>) &#8211; Type of time. Shutdown or Boot.</li>
+<li><strong>as_date</strong> (<code class="docutils literal"><span class="pre">datetime</span></code>) &#8211; WittyTime as datetime object.</li>
+<li><strong>day</strong> (<code class="docutils literal"><span class="pre">int</span></code> or <code class="docutils literal"><span class="pre">str</span></code>) &#8211; </li>
+<li><strong>hour</strong> (<code class="docutils literal"><span class="pre">int</span></code> or <code class="docutils literal"><span class="pre">str</span></code>) &#8211; </li>
+<li><strong>minute</strong> (<code class="docutils literal"><span class="pre">int</span></code> or <code class="docutils literal"><span class="pre">str</span></code>) &#8211; </li>
+<li><strong>second</strong> (<code class="docutils literal"><span class="pre">int</span></code> or <code class="docutils literal"><span class="pre">str</span></code>) &#8211; </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="wittyPy.WittyTime.t_left">
+<code class="descname">t_left</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/wittyPy/wittyPy.html#WittyTime.t_left"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#wittyPy.WittyTime.t_left" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns time in seconds between WittyTime and system time.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="guide.html">Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">API reference</a></li>
+</ul>
+
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Lucas Langholf.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/api.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/elpunkt/wittyPy" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

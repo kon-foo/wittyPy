@@ -1,0 +1,366 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>wittyPy.wittyPy &mdash; wittyPy 0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="wittyPy 0.1 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for wittyPy.wittyPy</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">subprocess</span> <span class="kn">as</span> <span class="nn">sp</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">from</span> <span class="nn">calendar</span> <span class="kn">import</span> <span class="n">monthrange</span>
+<span class="kn">from</span> <span class="nn">shutil</span> <span class="kn">import</span> <span class="n">copyfile</span>
+
+<div class="viewcode-block" id="WittyPi"><a class="viewcode-back" href="../../api.html#wittyPy.WittyPi">[docs]</a><span class="k">class</span> <span class="nc">WittyPi</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39; Central instance to run functions on the wittyPy.</span>
+
+<span class="sd">    :param path:</span>
+<span class="sd">        Path to your wittyPi folder (Where &quot;wittyPi.sh&quot;, &quot;utilities.sh&quot;, &quot;daemon.sh&quot; can be found).</span>
+<span class="sd">    :type path: ``str``</span>
+<span class="sd">    :param next_start:</span>
+<span class="sd">        WittyTime object, if a startup is set, else None.</span>
+<span class="sd">    :type next_start: ``WittyTime``</span>
+<span class="sd">    :param next_shutdown:</span>
+<span class="sd">        WittyTime object, if a shutdown is set, else None.</span>
+<span class="sd">    :type next_shutdown: ``WittyTime``</span>
+<span class="sd">    :param available_schedules:</span>
+<span class="sd">        List of available schedules.</span>
+<span class="sd">    :type available_schedules: ``list``</span>
+<span class="sd">    :param timedelta:</span>
+<span class="sd">        Difference between system time and Realtime Clock time. If positive, system time is ahead of the RTC and vice versa.</span>
+<span class="sd">    :type timedelta: ``float``</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">required_files</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;wittyPi.sh&quot;</span><span class="p">,</span> <span class="s2">&quot;utilities.sh&quot;</span><span class="p">,</span> <span class="s2">&quot;daemon.sh&quot;</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">next_start</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">next_shutdown</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timedelta</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">available_schedules</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initial_check</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;WittyPi2(State: {}, {}, {}, Available Schedules: {})&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_shutdown</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_schedules</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__run_util_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">connection</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;sudo&quot;</span><span class="p">,</span> <span class="s2">&quot;bash&quot;</span><span class="p">,</span><span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="s2">&quot;source &quot;</span><span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">+</span><span class="s2">&quot;utilities.sh &amp;&amp; &quot;</span> <span class="o">+</span> <span class="n">function</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span><span class="o">+</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">])],</span> <span class="n">stdout</span><span class="o">=</span><span class="n">sp</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">returncode</span><span class="p">,</span> <span class="n">connection</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;UTF-8&quot;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_initial_check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">required_files</span><span class="p">:</span>
+           <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">+</span><span class="n">f</span><span class="p">):</span>
+              <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Requirement Error: WittyPi Software &#39;{}&#39; not in &#39;{}&#39;.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__run_util_function</span><span class="p">(</span><span class="s2">&quot;is_rtc_connected&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+           <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Requirement Error: WittyPi2 Hardware not correctly connected.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_startup</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_shutdown</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_list_schedules</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compare_times</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_split_date_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date_str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">date_str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_startup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__run_util_function</span><span class="p">(</span><span class="s2">&quot;get_startup_time&quot;</span><span class="p">)</span>
+        <span class="n">local_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__run_util_function</span><span class="p">(</span><span class="s2">&quot;get_local_date_time&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;{}&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">local_t</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">next_start</span> <span class="o">=</span> <span class="n">WittyTime</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;boot&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">next_start</span> <span class="o">=</span> <span class="n">WittyTime</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_split_date_str</span><span class="p">(</span><span class="n">local_t</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;boot&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__run_util_function</span><span class="p">(</span><span class="s2">&quot;get_shutdown_time&quot;</span><span class="p">)</span>
+        <span class="n">local_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__run_util_function</span><span class="p">(</span><span class="s2">&quot;get_local_date_time&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;{}&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">local_t</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">next_shutdown</span> <span class="o">=</span> <span class="n">WittyTime</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;shutdown&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">next_shutdown</span> <span class="o">=</span> <span class="n">WittyTime</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_split_date_str</span><span class="p">(</span><span class="n">local_t</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;shutdown&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_list_schedules</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tmpls</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">+</span><span class="s2">&quot;schedules&quot;</span><span class="p">):</span>
+           <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.wpi&quot;</span><span class="p">):</span>
+               <span class="n">tmpls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">available_schedules</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">tmpls</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WittyPi.activate_schedule"><a class="viewcode-back" href="../../api.html#wittyPy.WittyPi.activate_schedule">[docs]</a>    <span class="k">def</span> <span class="nf">activate_schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Activates a WittyPi schedule, chosen by their index in self.available_schedules.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">index</span> <span class="o">-</span><span class="mi">1</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">available_schedules</span><span class="p">):</span>
+           <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Index Error: No schedule at index {} of self.available_schedules.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index</span><span class="p">))</span>
+        <span class="n">copyfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">+</span> <span class="s2">&quot;schedules/&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_schedules</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">+</span> <span class="s2">&quot;/schedule.wpi&quot;</span><span class="p">)</span>
+        <span class="n">sp</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;sudo&quot;</span><span class="p">,</span> <span class="s2">&quot;bash&quot;</span><span class="p">,</span><span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="s2">&quot;source &quot;</span><span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">+</span><span class="s2">&quot;runScript.sh&quot;</span><span class="p">],</span> <span class="n">stdout</span><span class="o">=</span><span class="n">sp</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_startup</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_shutdown</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="WittyPi.set_startup"><a class="viewcode-back" href="../../api.html#wittyPy.WittyPi.set_startup">[docs]</a>    <span class="k">def</span> <span class="nf">set_startup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Set startup for the WittyPi. Takes up to four \*args.</span>
+
+<span class="sd">        :param \*args:</span>
+<span class="sd">            1. Day (``int`` or ``str``): Either integer between 1-31 or &quot;??&quot; for wildcard.</span>
+<span class="sd">            2. Hour (``int`` or ``str``): Either integer between 0-23 or &quot;??&quot; for wildcard.</span>
+<span class="sd">            3. Minute (``int``): Integer between 0-59.</span>
+<span class="sd">            4. Second (``int``): Integer between 0-59.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">new_time</span> <span class="o">=</span> <span class="n">WittyTime</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">when</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__run_util_function</span><span class="p">(</span><span class="s2">&quot;get_utc_date_time&quot;</span><span class="p">,</span> <span class="n">new_time</span><span class="o">.</span><span class="n">day</span><span class="p">,</span> <span class="n">new_time</span><span class="o">.</span><span class="n">hour</span><span class="p">,</span> <span class="n">new_time</span><span class="o">.</span><span class="n">minute</span><span class="p">,</span> <span class="n">new_time</span><span class="o">.</span><span class="n">second</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__run_util_function</span><span class="p">(</span><span class="s2">&quot;set_startup_time&quot;</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_split_date_str</span><span class="p">(</span><span class="n">when</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_startup</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="WittyPi.set_shutdown"><a class="viewcode-back" href="../../api.html#wittyPy.WittyPi.set_shutdown">[docs]</a>    <span class="k">def</span> <span class="nf">set_shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Set shutdown for the WittyPi. Takes up to three \*args.</span>
+
+<span class="sd">        :param \*args:</span>
+<span class="sd">            1. Day (``int`` or ``str``): Either integer between 1-31 or &quot;??&quot; for wildcard.</span>
+<span class="sd">            2. Hour (``int`` or ``str``): Either integer between 0-23 or &quot;??&quot; for wildcard.</span>
+<span class="sd">            3. Minute (``int``): Integer between 0-59.</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">new_time</span> <span class="o">=</span> <span class="n">WittyTime</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">when</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__run_util_function</span><span class="p">(</span><span class="s2">&quot;get_utc_date_time&quot;</span><span class="p">,</span> <span class="n">new_time</span><span class="o">.</span><span class="n">day</span><span class="p">,</span> <span class="n">new_time</span><span class="o">.</span><span class="n">hour</span><span class="p">,</span> <span class="n">new_time</span><span class="o">.</span><span class="n">minute</span><span class="p">,</span> <span class="n">new_time</span><span class="o">.</span><span class="n">second</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__run_util_function</span><span class="p">(</span><span class="s2">&quot;set_shutdown_time&quot;</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_split_date_str</span><span class="p">(</span><span class="n">when</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_shutdown</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="WittyPi.reset"><a class="viewcode-back" href="../../api.html#wittyPy.WittyPi.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">option</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Resets the WittyPi according to options</span>
+
+<span class="sd">        :param option:</span>
+<span class="sd">            Options: startup, shutdown, script, all.</span>
+<span class="sd">        :type options: ``str``</span>
+
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;startup&quot;</span><span class="p">,</span> <span class="s2">&quot;shutdown&quot;</span><span class="p">,</span> <span class="s2">&quot;script&quot;</span><span class="p">,</span> <span class="s2">&quot;all&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Error: Chose one of these options: &quot;startup&quot;, &quot;shutdown&quot;, &quot;script&quot;, &quot;all&quot;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">!=</span> <span class="s2">&quot;shutdown&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__run_util_function</span><span class="p">(</span><span class="s2">&quot;clear_startup_time&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="o">!=</span> <span class="s2">&quot;startup&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__run_util_function</span><span class="p">(</span><span class="s2">&quot;clear_shutdown_time&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">option</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;script&quot;</span><span class="p">,</span> <span class="s2">&quot;all&quot;</span><span class="p">]:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">+</span> <span class="s2">&quot;/schedule.wpi&quot;</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_startup</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_shutdown</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_compare_times</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Compare RTC time with system time. Positive self.timdelta means your system time is ahead of the RTC and vice versa.&#39;&#39;&#39;</span>
+        <span class="n">rtc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__run_util_function</span><span class="p">(</span><span class="s2">&quot;get_rtc_time&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">sys_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timedelta</span> <span class="o">=</span> <span class="p">(</span><span class="n">sys_time</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">rtc</span><span class="p">,</span> <span class="s2">&quot;%a </span><span class="si">%d</span><span class="s2"> %b %Y %H:%M:%S %Z&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="WittyTime"><a class="viewcode-back" href="../../api.html#wittyPy.WittyTime">[docs]</a><span class="k">class</span> <span class="nc">WittyTime</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39;WittyTime object to validate and store times for the WittyPi.</span>
+
+<span class="sd">    :param name:</span>
+<span class="sd">        Type of time. Shutdown or Boot.</span>
+<span class="sd">    :type name: ``str``</span>
+<span class="sd">    :param as_date:</span>
+<span class="sd">        WittyTime as datetime object.</span>
+<span class="sd">    :type as_date: ``datetime``</span>
+<span class="sd">    :param day:</span>
+<span class="sd">    :type day: ``int`` or ``str``</span>
+<span class="sd">    :param hour:</span>
+<span class="sd">    :type hour: ``int`` or ``str``</span>
+<span class="sd">    :param minute:</span>
+<span class="sd">    :type minute: ``int`` or ``str``</span>
+<span class="sd">    :param second:</span>
+<span class="sd">    :type second: ``int`` or ``str``</span>
+
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">day</span> <span class="o">=</span> <span class="s2">&quot;unset&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hour</span> <span class="o">=</span> <span class="s2">&quot;unset&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minute</span> <span class="o">=</span> <span class="s2">&quot;unset&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">second</span> <span class="o">=</span> <span class="s2">&quot;unset&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">as_date</span> <span class="o">=</span> <span class="s2">&quot;unset&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__validate</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__check_format</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__to_datetime</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__check_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">arg</span> <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+               <span class="n">args</span><span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">var</span><span class="p">)]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+               <span class="k">pass</span>
+        <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">elif</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span> <span class="ow">and</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;??&quot;</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Format Error: Day must be an integer between 1-31 or &#39;??&#39; for wildcard.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">day</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hour</span> <span class="o">=</span> <span class="mo">00</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">minute</span> <span class="o">=</span> <span class="mo">00</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">second</span> <span class="o">=</span> <span class="mo">00</span>
+            <span class="k">return</span>
+        <span class="k">elif</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">24</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hour</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;??&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">day</span> <span class="o">==</span> <span class="s2">&quot;??&quot;</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Format Error: Wildcards must be used from left to right.&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">hour</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Format Error: Hour must be an integer between 0-24 or &#39;??&#39; for wildcard.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">minute</span> <span class="o">=</span> <span class="mo">00</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">second</span> <span class="o">=</span> <span class="mo">00</span>
+            <span class="k">return</span>
+        <span class="k">elif</span> <span class="n">args</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">60</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">minute</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">args</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;??&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Format Error: Wildcards should only be used for Days and Hours. Not for Minutes&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Format Error: Minute must be integer between 0-59.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">second</span> <span class="o">=</span> <span class="mo">00</span>
+        <span class="k">elif</span> <span class="n">args</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">60</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">second</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">args</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;??&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Format Error: Wildcards should only be used for Days and Hours. Not for Seconds&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Format Error: Second must be integer between 0-59.&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">__to_datetime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">day</span> <span class="o">==</span> <span class="s1">&#39;unset&#39;</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="nb">next</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;year&#39;</span><span class="p">:</span><span class="n">now</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="s1">&#39;month&#39;</span><span class="p">:</span> <span class="n">now</span><span class="o">.</span><span class="n">month</span><span class="p">,</span> <span class="s1">&#39;minute&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">minute</span><span class="p">,</span> <span class="s1">&#39;second&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">second</span><span class="p">}</span>
+        <span class="n">extramonth</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hour</span> <span class="o">==</span> <span class="s1">&#39;??&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">minute</span> <span class="o">&lt;</span> <span class="n">now</span><span class="o">.</span><span class="n">minute</span><span class="p">:</span>
+                <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;hour&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">now</span><span class="o">.</span><span class="n">hour</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;hour&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">23</span><span class="p">:</span>
+                    <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;hour&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;hour&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">now</span><span class="o">.</span><span class="n">hour</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;hour&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hour</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">day</span> <span class="o">==</span> <span class="s1">&#39;??&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;hour&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">now</span><span class="o">.</span><span class="n">hour</span> <span class="ow">or</span> <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;hour&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">now</span><span class="o">.</span><span class="n">hour</span> <span class="ow">and</span> <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;minute&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">now</span><span class="o">.</span><span class="n">minute</span><span class="p">:</span>
+                <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;day&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">now</span><span class="o">.</span><span class="n">day</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;day&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">monthrange</span><span class="p">(</span><span class="n">now</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="n">now</span><span class="o">.</span><span class="n">month</span><span class="p">)[</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;day&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                    <span class="n">extramonth</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;day&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">now</span><span class="o">.</span><span class="n">day</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;day&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">day</span>
+        <span class="k">if</span> <span class="n">extramonth</span><span class="p">:</span>
+            <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;month&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">now</span><span class="o">.</span><span class="n">month</span> <span class="o">+</span><span class="mi">1</span>
+            <span class="k">if</span> <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;month&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">13</span><span class="p">:</span>
+                <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;month&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">now</span><span class="o">.</span><span class="n">year</span> <span class="o">+</span><span class="mi">1</span>
+        <span class="nb">next</span> <span class="o">=</span> <span class="s1">&#39;{}-{}-{} {}:{}:{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">next</span><span class="p">[</span><span class="s1">&#39;year&#39;</span><span class="p">],</span> <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;month&#39;</span><span class="p">],</span> <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;day&#39;</span><span class="p">],</span> <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;hour&#39;</span><span class="p">],</span> <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;minute&#39;</span><span class="p">],</span> <span class="nb">next</span><span class="p">[</span><span class="s1">&#39;second&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">as_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="nb">next</span><span class="p">,</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WittyTime.t_left"><a class="viewcode-back" href="../../api.html#wittyPy.WittyTime.t_left">[docs]</a>    <span class="k">def</span> <span class="nf">t_left</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;Returns time in seconds between WittyTime and system time.&#39;&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_date</span> <span class="o">==</span> <span class="s1">&#39;unset&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;{} is unset.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_date</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;boot&#39;</span><span class="p">,</span> <span class="s1">&#39;shutdown&#39;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="s2">&quot;Next {} at {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_date</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;WittyTime: {}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">as_date</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;WittyTime(type={}, day={}, hour={}, minute={}, second={}, as_date={})&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">day</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">hour</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">minute</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">second</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">as_date</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../guide.html">Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API reference</a></li>
+</ul>
+
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Lucas Langholf.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+    <a href="https://github.com/elpunkt/wittyPy" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>
