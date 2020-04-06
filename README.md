@@ -4,9 +4,9 @@
 ## Example
 ```python
    import wittyPy
-   
-   witty = wittyPy.WittyPy('path/to/wittyPi/Software')
-   
+
+   witty = wittyPy.WittyPi('path/to/wittyPi/Software')
+
    print(witty.next_start)
    witty.set_startup(10,9,8,7)
    print(witty.next_start)
